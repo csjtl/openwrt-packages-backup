@@ -203,6 +203,8 @@ jobs:
         		rm -rf applications/$ipk
         	fi
         done
+        
+        deleteempty
 
     #- name: Delete duplicated packages
     #  run: |
