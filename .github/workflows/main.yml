@@ -156,48 +156,49 @@ jobs:
         git_clone https://github.com/sensec/luci-app-udp2raw
         git_clone https://github.com/LGA1150/openwrt-sysuh3c && mvdir openwrt-sysuh3c
         git_clone https://github.com/gdck/luci-app-cupsd cupsd1 && mv -n cupsd1/luci-app-cupsd cupsd1/cups/cups ./ ; rm -rf cupsd1
-        ) &
-        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean ledelean &
-        (
-        svn export https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
-        svn export https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
-        svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
-        svn export https://github.com/coolsnowwolf/lede/trunk/package/network/services/shellsync
-        svn export https://github.com/coolsnowwolf/packages/trunk/net/miniupnpd
-        svn export https://github.com/coolsnowwolf/packages/trunk/net/mwan3
-        svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
-        svn export https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
-        svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-        svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
-        ) &
-        (
-        svn export https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
-        svn export https://github.com/sundaqiang/openwrt-packages/trunk/luci-app-services-wolplus
-        svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
-        svn export https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
-        svn export https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
-        svn export https://github.com/linkease/istore/trunk/luci/luci-app-store
-        svn export https://github.com/linkease/istore-ui/trunk/app-store-ui
-        ) &
-        (
-        git_sparse_clone master "https://github.com/openwrt/packages" "oppackages" \
-        net/openvpn utils/cgroupfs-mount net/xray-core
-        git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
-        ) &
-        (
-        git_sparse_clone openwrt-21.02 "https://github.com/immortalwrt/immortalwrt" "immwrt" package/kernel/mt7601u-ap package/kernel/mtk-eip93 \
-        package/kernel/r8152 package/kernel/r8168 package/kernel/rtl8188eu package/kernel/rtl8812au-ac package/kernel/rtl8192eu \
-        package/kernel/rtl8821cu package/kernel/rtl88x2bu
-        ) &
-        
-        git_sparse_clone master "https://github.com/immortalwrt/packages" "immpkgs" net/adguardhome net/mwol net/nps net/verysync \
-        net/sub-web net/smartdns \
-        net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gost net/gowebdav \
-        admin/bpytop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
-        utils/cpulimit utils/filebrowser multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go
-
-        svn export --force https://github.com/immortalwrt/luci/trunk/applications
-
+        ) 
+#        &
+#        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean ledelean &
+#        (
+#        svn export https://github.com/Lienol/openwrt/trunk/package/lean/luci-app-autoreboot
+#        svn export https://github.com/fw876/helloworld/trunk/luci-app-ssr-plus
+#        svn export https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-ddns/trunk/tencentcloud_ddns luci-app-tencentddns
+#        svn export https://github.com/coolsnowwolf/lede/trunk/package/network/services/shellsync
+#        svn export https://github.com/coolsnowwolf/packages/trunk/net/miniupnpd
+#        svn export https://github.com/coolsnowwolf/packages/trunk/net/mwan3
+#        svn export https://github.com/x-wrt/packages/trunk/net/nft-qos
+#        svn export https://github.com/x-wrt/luci/trunk/applications/luci-app-nft-qos
+#        svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
+#        svn export https://github.com/lisaac/luci-app-dockerman/trunk/applications/luci-app-dockerman
+#        ) &
+#        (
+#        svn export https://github.com/doushang/luci-app-shortcutmenu/trunk/luci-app-shortcutmenu
+#        svn export https://github.com/sundaqiang/openwrt-packages/trunk/luci-app-services-wolplus
+#        svn export https://github.com/Ysurac/openmptcprouter-feeds/trunk/luci-app-iperf
+#        svn export https://github.com/sirpdboy/netspeedtest/trunk/luci-app-netspeedtest
+#        svn export https://github.com/messense/aliyundrive-webdav/trunk/openwrt aliyundrive && mvdir aliyundrive
+#        svn export https://github.com/linkease/istore/trunk/luci/luci-app-store
+#        svn export https://github.com/linkease/istore-ui/trunk/app-store-ui
+#        ) &
+#        (
+#        git_sparse_clone master "https://github.com/openwrt/packages" "oppackages" \
+#        net/openvpn utils/cgroupfs-mount net/xray-core
+#        git_sparse_clone master "https://github.com/x-wrt/com.x-wrt" "x-wrt" natflow lua-ipops luci-app-macvlan
+#        ) &
+#        (
+#        git_sparse_clone openwrt-21.02 "https://github.com/immortalwrt/immortalwrt" "immwrt" package/kernel/mt7601u-ap package/kernel/mtk-eip93 \
+#        package/kernel/r8152 package/kernel/r8168 package/kernel/rtl8188eu package/kernel/rtl8812au-ac package/kernel/rtl8192eu \
+#        package/kernel/rtl8821cu package/kernel/rtl88x2bu
+#        ) &
+#        
+#        git_sparse_clone master "https://github.com/immortalwrt/packages" "immpkgs" net/adguardhome net/mwol net/nps net/verysync \
+#        net/sub-web net/smartdns \
+#        net/subconverter net/ngrokc net/oscam net/njitclient net/scutclient net/gost net/gowebdav \
+#        admin/bpytop libs/jpcre2 libs/wxbase libs/rapidjson libs/libcron libs/quickjspp libs/toml11 \
+#        utils/cpulimit utils/filebrowser multimedia/gmediarender multimedia/UnblockNeteaseMusic-Go
+#
+#        svn export --force https://github.com/immortalwrt/luci/trunk/applications
+#
         for ipk in $(ls applications); do
         	if [[ $ipk != "luci-app-transmission" && $(ls -l applications/$ipk/po | wc -l) -gt 3 ]]; then
         		rm -rf applications/$ipk
