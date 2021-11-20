@@ -190,18 +190,18 @@ jobs:
         	fi
         done
 
-    - name: Delete duplicated packages
-      run: |
-        shopt -s extglob
-        mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
-        mv -n applications/!(luci-app-turboacc|luci-app-vlmcsd) ./ ; rm -Rf applications
-        mv -n ledelean/* ./ ; rm -Rf ledelean
-        mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
-        cp -rf diy/.packages/* ./ || true
-        rm -Rf */.git
-        rm -Rf my-autocore
-        rm -Rf my-default-settings
-        mv -f mt/drivers mt-drivers && cp -rf mt/* ./ && rm -Rf mt
+    #- name: Delete duplicated packages
+    #  run: |
+    #    shopt -s extglob
+    #    mv -n openwrt-passwall/* ./ ; rm -Rf openwrt-passwall
+    #    mv -n applications/!(luci-app-turboacc|luci-app-vlmcsd) ./ ; rm -Rf applications
+    #    mv -n ledelean/* ./ ; rm -Rf ledelean
+    #    mv -n openwrt-package/* ./ ; rm -Rf openwrt-package
+    #    cp -rf diy/.packages/* ./ || true
+    #    rm -Rf */.git
+    #    rm -Rf my-autocore
+    #    rm -Rf my-default-settings
+    #    mv -f mt/drivers mt-drivers && cp -rf mt/* ./ && rm -Rf mt
       
     - name: Apply
       run: |
