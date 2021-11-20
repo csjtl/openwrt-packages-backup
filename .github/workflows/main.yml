@@ -81,6 +81,20 @@ jobs:
         mv -n `find $1/* -maxdepth 0 -type d` ./
         rm -rf $1
         }
+        deleteempty() {
+          find ${1:-.} -mindepth 1 -maxdepth 1 -type d | while read -r dir
+          do
+          if [[ -z "$(find "$dir" -mindepth 1 -type f)" ]] >/dev/null
+           then
+          echo "$dir"
+          rm -rf ${dir} 2>&- && echo "Empty, Deleted!" || echo "Delete error"
+          fi
+          if [ -d ${dir} ]
+            then
+          deleteempty "$dir"
+          fi
+          done
+        }
         (
         git_clone https://github.com/kiddin9/my-packages && mvdir my-packages
         git_clone https://github.com/kiddin9/openwrt-bypass && mvdir openwrt-bypass
@@ -206,10 +220,10 @@ jobs:
     - name: Apply
       run: |
         git add .
-        git commit -m "Sync $(date +%Y-%m-%d" "%H:%M:%S)" || true
+        git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
         git reset --soft HEAD^
         git add .
-        git commit -m "Sync $(date +%Y-%m-%d" "%H:%M:%S)" || true
+        git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
         git push
 
     - name: Delete workflow runs
