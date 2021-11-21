@@ -49,7 +49,6 @@ jobs:
         }
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean/luci-app-ttyd
 
     - name: Apply
       run: |
