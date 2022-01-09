@@ -1,5 +1,8 @@
 #!/bin/sh /etc/rc.common
 # Copyright (c) 2019 vernesong
+
+[ ! -f /etc/openwrt_release ] && exit 0
+
 . /usr/share/openclash/openclash_ps.sh
 . /usr/share/openclash/ruby.sh
 . /usr/share/openclash/log.sh
@@ -213,6 +216,57 @@ EOF
    fi
 }
 
+#Vmess-ws旧格式兼容，不支持proxy-provider
+yml_vmess_compatible()
+{
+   ruby -ryaml -E UTF-8 -e "
+   begin
+   Value = YAML.load_file('$1');
+   if Value.key?('$2') then
+      Value_1 = Marshal.load(Marshal.dump(Value['$2']));
+      Value['$2'].each{
+      |x|
+      if x['type'] != 'vmess' then
+         next
+      end;
+      if x.key?('ws-path') then
+         if not x.key?('ws-opts') then
+            x['ws-opts'] = {'path'=>x['ws-path'].to_s}
+         else
+            if not x['ws-opts'].key?('path') then
+               x['ws-opts']['path'] = {x['ws-path'].to_s}
+            elsif x['ws-opts']['path'].empty? then
+               x['ws-opts']['path'].update({x['ws-path'].to_s})
+            end
+         end
+         x.delete('ws-path')
+      end;
+      if x.key?('ws-headers') then
+         x['ws-headers'].keys.each{
+         |v|
+            if not x.key?('ws-opts') then
+               x['ws-opts'] = {'headers'=>{v.to_s=>x['ws-headers'][v].to_s}}
+            else
+               if not x['ws-opts'].key?('headers') then
+                  x['ws-opts']['headers'] = {v.to_s=>x['ws-headers'][v].to_s}
+               elsif x['ws-opts']['headers'].empty? then
+                  x['ws-opts']['headers'].update({v.to_s=>x['ws-headers'][v].to_s})
+               end
+            end
+         };
+         x.delete('ws-headers')
+      end;
+      };
+      if not Value_1.eql?(Value['$2']) then
+         File.open('$1','w') {|f| YAML.dump(Value, f)}
+      end;
+   end;
+   rescue Exception => e
+   puts '${LOGTIME} Error: Edit Vmess compatible Error,【' + e.message + '】'
+   end
+   " 2>/dev/null >> $LOG_FILE
+}
+
 #修改集路径
 yml_provider_path()
 {
@@ -240,6 +294,10 @@ yml_provider_path()
       if not x['path'].include? '$3' and not x['path'].include? 'game_rules' then
          v=File.basename(x['path'])
          x['path']='./$3/'+v
+      end
+      #CDN Replace
+      if x['url'] and x['url'] =~ /^https:\/\/raw.githubusercontent.com/ then
+         x['url'] = 'https://cdn.jsdelivr.net/gh/' + x['url'].split('/')[3] + '/' + x['url'].split('/')[4] + '@' + x['url'].split(x['url'].split('/')[4] + '/')[1]
       end
       };
       if not Value_1.eql?(Value['$2']) then
@@ -656,22 +714,27 @@ yml_rule_set_add()
 {
 ruby -ryaml -E UTF-8 -e "
 begin
-Value = YAML.load_file('$CONFIG_FILE');
-if Value.has_key?('rules') and not Value['rules'].to_a.empty? then
+   Value = YAML.load_file('$CONFIG_FILE');
    if $3 == 1 then
-      ruby_add_index = Value['rules'].index(Value['rules'].grep(/(GEOIP|MATCH|FINAL)/).first)
-      ruby_add_index ||= -1
-      Value['rules'].insert(ruby_add_index,'RULE-SET,${1},${2}')
+      if Value.has_key?('rule-set-bottom') and not Value['rule-set-bottom'].to_a.empty? then
+         Value['rule-set-bottom'].insert(-1,'RULE-SET,${1},${2}')
+      else
+         Value_1 = {'rule-set-bottom'=>['RULE-SET,${1},${2}']}
+         Value.merge!(Value_1);
+      end
+      Value['rule-set-bottom'] = Value['rule-set-bottom'].uniq
    else
-      Value['rules'].insert(0,'RULE-SET,${1},${2}')
+      if Value.has_key?('rule-set-top') and not Value['rule-set-top'].to_a.empty? then
+         Value['rule-set-top'].insert(-1,'RULE-SET,${1},${2}')
+      else
+         Value_1 = {'rule-set-top'=>['RULE-SET,${1},${2}']}
+         Value.merge!(Value_1);
+      end
+      Value['rule-set-top'] = Value['rule-set-top'].uniq
    end
-else
-   Value_1 = {'rules'=>['RULE-SET,${1},${2}']}
-   Value.merge!(Value_1);
-end;
 File.open('$CONFIG_FILE','w') {|f| YAML.dump(Value, f)}
 rescue Exception => e
-puts '${LOGTIME} Error: Rule Set Add Error,【' + e.message + '】'
+   puts '${LOGTIME} Error: Rule Set Add Error,【' + e.message + '】'
 end
 " 2>/dev/null >> $LOG_FILE
 }
@@ -813,17 +876,67 @@ yml_custom_rule_provider()
    if [ -f "$RULE_PROVIDER_FILE" ]; then
       ruby -ryaml -E UTF-8 -e "
       begin
-      Value = YAML.load_file('$CONFIG_FILE');
-      Value_1 = YAML.load_file('$RULE_PROVIDER_FILE');
-      if Value.has_key?('rule-providers') and not Value['rule-providers'].to_a.empty? then
-         Value['rule-providers'].merge!(Value_1)
-      else
-         Value['rule-providers']=Value_1
-      end;
-      File.open('$CONFIG_FILE','w') {|f| YAML.dump(Value, f)}
+         Value = YAML.load_file('$CONFIG_FILE');
       rescue Exception => e
-      puts '${LOGTIME} Error: Custom Rule Provider Merge Error,【' + e.message + '】'
-      end
+         puts '${LOGTIME} Error: Load File Error,【' + e.message + '】'
+      end;
+      
+      begin
+         Value_1 = YAML.load_file('$RULE_PROVIDER_FILE');
+         if Value.has_key?('rule-providers') and not Value['rule-providers'].to_a.empty? then
+            Value['rule-providers'].merge!(Value_1)
+         else
+            Value['rule-providers']=Value_1
+         end;
+      rescue Exception => e
+         puts '${LOGTIME} Error: Custom Rule Provider Merge Error,【' + e.message + '】'
+      end;
+      
+      begin
+         if Value.has_key?('rules') and not Value['rules'].to_a.empty? then
+            if Value.has_key?('rule-set-bottom') and not Value['rule-set-bottom'].to_a.empty? then
+               if $enable_rule_proxy != 1 then
+                  ruby_add_index = Value['rules'].index(Value['rules'].grep(/(GEOIP|MATCH|FINAL)/).first)
+               else
+                  if Value['rules'].grep(/GEOIP/)[0].nil? or Value['rules'].grep(/GEOIP/)[0].empty? then
+                     ruby_add_index = Value['rules'].index(Value['rules'].grep(/DST-PORT,80/).last)
+                     ruby_add_index ||= Value['rules'].index(Value['rules'].grep(/(MATCH|FINAL)/).first)
+                  else
+                     ruby_add_index = Value['rules'].index(Value['rules'].grep(/GEOIP/).first)
+                  end
+               end
+               ruby_add_index ||= -1
+               Value['rule-set-bottom'].reverse.each{|x| Value['rules'].insert(ruby_add_index,x)}
+               Value.delete('rule-set-bottom')
+            end
+            if Value.has_key?('rule-set-top') and not Value['rule-set-top'].to_a.empty? then
+               if Value['rules'].to_a.grep(/(?=.*198.18.0)(?=.*REJECT)/).empty? then
+                  Value['rule-set-top'].reverse.each{|x| Value['rules'].insert(0,x)}
+               else
+                  ruby_add_index = Value['rules'].index(Value['rules'].grep(/(?=.*198.18.0)(?=.*REJECT)/).first)
+                  Value['rule-set-top'].reverse.each{|x| Value['rules'].insert(ruby_add_index + 1,x)}
+               end
+               Value.delete('rule-set-top')
+            end
+         else
+            if Value.has_key?('rule-set-top') and not Value['rule-set-top'].to_a.empty? then
+               Value['rules'] = Value['rule-set-top']
+               Value.delete('rule-set-top')
+            end
+            if Value.has_key?('rule-set-bottom') and not Value['rule-set-bottom'].to_a.empty? then
+               if Value.has_key?('rule-set-top') and not Value['rule-set-top'].to_a.empty? then
+                  Value['rules'] = Value['rules'] | Value['rule-set-bottom']
+               else
+                  Value['rules'] = Value['rule-set-bottom']
+               end
+               Value.delete('rule-set-bottom')
+            end
+         end;
+      rescue Exception => e
+         puts '${LOGTIME} Error: Rule Set Add Error,【' + e.message + '】'
+      ensure
+         File.open('$CONFIG_FILE','w') {|f| YAML.dump(Value, f)}
+      end;
       " 2>/dev/null >> $LOG_FILE
    fi
 }
@@ -1007,12 +1120,15 @@ write_run_quick()
 custom_rule_provider()
 {
    local section="$1"
-   local enabled
+   local enabled config
+   config_get "config" "$section" "config" ""
    config_get_bool "enabled" "$section" "enabled" "1"
 
    if [ "$enabled" = "0" ]; then
       return
-   else
+   fi
+   
+   if [ "$config" = "all" ] || [ "$config" = "$CONFIG_NAME" ]; then
       config_set_custom_rule_provider=1
    fi
 }
@@ -1080,7 +1196,7 @@ do_run_file()
    
    config_load "openclash"
    config_set_custom_rule_provider=0
-   for i in "rule_provider_config" "rule_providers" "game_config"; do
+   for i in "rule_provider_config" "rule_provider_config" "rule_providers" "game_config"; do
       config_foreach custom_rule_provider "$i"
       if [ "$config_set_custom_rule_provider" -eq 1 ]; then
       	break
@@ -1203,23 +1319,37 @@ start_run_core()
    check_interface_name
    config_reload=$(uci -q get openclash.config.config_reload)
    #Resore history cache
-   if [ -f "$HISTORY_PATH" ]; then
-      cmp -s "$CACHE_PATH" "$HISTORY_PATH"
-      if [ "$?" -ne "0" ]; then
-         cp "$HISTORY_PATH" "$CACHE_PATH" 2>/dev/null
+   if [ -f "$HISTORY_PATH" ] && [ -f "$HISTORY_PATH_OLD" ]; then
+      if [ "$(date -r $HISTORY_PATH +%s)" -ge "$(date -r $HISTORY_PATH_OLD +%s)" ]; then
+         cmp -s "$CACHE_PATH" "$HISTORY_PATH"
+         if [ "$?" -ne "0" ]; then
+            cp "$HISTORY_PATH" "$CACHE_PATH" 2>/dev/null
+         fi
+      else
+         cmp -s "$CACHE_PATH_OLD" "$HISTORY_PATH_OLD"
+         if [ "$?" -ne "0" ]; then
+            cp "$HISTORY_PATH_OLD" "$CACHE_PATH_OLD" 2>/dev/null
+         fi
       fi
-   fi
-   if [ -f "$HISTORY_PATH_OLD" ]; then
-      cmp -s "$CACHE_PATH_OLD" "$HISTORY_PATH_OLD"
-      if [ "$?" -ne "0" ]; then
-         cp "$HISTORY_PATH_OLD" "$CACHE_PATH_OLD" 2>/dev/null
+   else
+      if [ -f "$HISTORY_PATH" ]; then
+         cmp -s "$CACHE_PATH" "$HISTORY_PATH"
+         if [ "$?" -ne "0" ]; then
+            cp "$HISTORY_PATH" "$CACHE_PATH" 2>/dev/null
+         fi
+      fi
+      if [ -f "$HISTORY_PATH_OLD" ]; then
+         cmp -s "$CACHE_PATH_OLD" "$HISTORY_PATH_OLD"
+         if [ "$?" -ne "0" ]; then
+            cp "$HISTORY_PATH_OLD" "$CACHE_PATH_OLD" 2>/dev/null
+         fi
       fi
    fi
    if [ -n "$(pidof clash)" ] && [ "$core_type" != "TUN" ] && [ "$config_reload" != "0" ]; then
       curl -s --connect-timeout 5 -m 5 -H 'Content-Type: application/json' -H "Authorization: Bearer ${da_password}" -XPUT http://"$lan_ip":"$cn_port"/configs -d "{\"path\": \"$CONFIG_FILE\"}" 2>/dev/null
    else
+      kill_clash
       if [ -z "$_koolshare" ]; then
-         kill_clash
          #防止赋权失败
          touch /tmp/openclash.log 2>/dev/null
          chmod o+w /etc/openclash/proxy_provider/* 2>/dev/null
@@ -1391,7 +1521,10 @@ firewall_rule_exclude()
    for p in $proto; do
        if [ $p == tcp ]; then e_tcp=true; fi
        if [ $p == udp ]; then e_udp=true; fi
+       if [ $p == all ]; then e_tcp=true; e_udp=true; fi
    done
+   
+   if [ -z "$proto" ]; then e_tcp=true; e_udp=true; fi
 
    if ! $e_udp && ! $e_tcp ; then
        return
@@ -1484,7 +1617,10 @@ firewall_redirect_exclude()
    for p in $proto; do
        if [ $p == tcp ]; then e_tcp=true; fi
        if [ $p == udp ]; then e_udp=true; fi
+       if [ $p == all ]; then e_tcp=true; e_udp=true; fi
    done
+   
+   if [ -z "$proto" ]; then e_tcp=true; e_udp=true; fi
 
    if ! $e_udp && ! $e_tcp ; then
        return
@@ -1595,15 +1731,6 @@ if [ -n "$(uci -q get openclash.config.wan_ac_black_ips)" ]; then
    config_list_foreach "config" "wan_ac_black_ips" ac_add "wan_ac_black_ips" "wan_ac_black_ipv6s"
 fi
 
-#wan local
-   ipset create localwannetwork hash:net
-   wanip4s=$(/usr/share/openclash/openclash_get_network.lua "wanip")
-   if [ -n "$wanip4s" ]; then
-      for wanip4 in $wanip4s; do
-         ipset add localwannetwork "$wanip4" 2>/dev/null
-      done
-   fi
-
 #local
    ipset create localnetwork hash:net
    ipset add localnetwork 0.0.0.0/8
@@ -1707,7 +1834,6 @@ if [ -z "$en_mode_tun" ] || [ "$en_mode_tun" -eq 2 ]; then
       iptables -t nat -N openclash_output
       iptables -t nat -F openclash_output
       iptables -t nat -A openclash_output -m set --match-set localnetwork dst -j RETURN
-      iptables -t nat -A openclash_output -m set --match-set localwannetwork src -j RETURN >/dev/null 2>&1
       if [ "$en_mode" = "fake-ip" ]; then
          if [ "$intranet_allowed" -eq 1 ]; then
             iptables -t nat -A openclash_output -m owner ! --uid-owner 65534 -p tcp -d 198.18.0.0/16 -j DNAT --to-destination "$lan_ip:$proxy_port"
@@ -1732,7 +1858,6 @@ if [ -z "$en_mode_tun" ] || [ "$en_mode_tun" -eq 2 ]; then
          iptables -t nat -N openclash_output
          iptables -t nat -F openclash_output
          iptables -t nat -A openclash_output -m set --match-set localnetwork dst -j RETURN
-         iptables -t nat -A openclash_output -m set --match-set localwannetwork src -j RETURN >/dev/null 2>&1
          if [ "$intranet_allowed" -eq 1 ]; then
             iptables -t nat -A openclash_output -p tcp -d 198.18.0.0/16 -j DNAT --to-destination "$lan_ip:$proxy_port"
          else
@@ -1762,7 +1887,6 @@ if [ -n "$en_mode_tun" ]; then
       iptables -t mangle -N openclash_output
       iptables -t mangle -F openclash_output
       iptables -t mangle -A openclash_output -m set --match-set localnetwork dst -j RETURN
-      iptables -t mangle -A openclash_output -m set --match-set localwannetwork src -j RETURN >/dev/null 2>&1
       if [ "$en_mode_tun" -eq 1 ]; then
          if [ -z "$_koolshare" ]; then
             iptables -t mangle -A openclash_output -m owner ! --uid-owner 65534 -d 198.18.0.0/16 -j MARK --set-mark "$PROXY_FWMARK"
@@ -1779,7 +1903,6 @@ if [ -n "$en_mode_tun" ]; then
       iptables -t mangle -N openclash_output
       iptables -t mangle -F openclash_output
       iptables -t mangle -A openclash_output -m set --match-set localnetwork dst -j RETURN
-      iptables -t mangle -A openclash_output -m set --match-set localwannetwork src -j RETURN >/dev/null 2>&1
       iptables -t mangle -A openclash_output -m set --match-set wan_ac_black_ips dst -j RETURN >/dev/null 2>&1
       iptables -t mangle -A openclash_output -m owner ! --uid-owner 65534 -m set ! --match-set common_ports dst -j RETURN >/dev/null 2>&1
       if [ "$china_ip_route" = "1" ]; then
@@ -1810,7 +1933,8 @@ if [ -n "$en_mode_tun" ]; then
    
    if [ "$en_mode_tun" -eq 1 ]; then
       iptables -t mangle -I PREROUTING -j openclash
-      iptables -t nat -I PREROUTING -m comment --comment "OpenClash TCP DNS Hijack" -p tcp --dport 53 -j ACCEPT
+      iptables -t nat -I PREROUTING -m comment --comment "OpenClash Google DNS Hijack" -p tcp -d 8.8.8.8 --dport 53 -j ACCEPT
+      iptables -t nat -I PREROUTING -m comment --comment "OpenClash Google DNS Hijack" -p tcp -d 8.8.4.4 --dport 53 -j ACCEPT
    else
       iptables -t mangle -I PREROUTING -p tcp --dport 53 -j openclash_dns_hijack
       iptables -t mangle -A openclash_dns_hijack -m comment --comment "OpenClash Google DNS Hijack" -d 8.8.8.8 -j MARK --set-mark "$PROXY_FWMARK"
@@ -1856,15 +1980,6 @@ if [ "$ipv6_enable" -eq 1 ] && [ -n "$(ip6tables -t mangle -L 2>&1 | grep -o 'Ch
    if [ "$china_ip6_route" = "1" ] || [ "$disable_udp_quic" = "1" ]; then
       ipset -! flush china_ip6_route 2>/dev/null
       ipset -! restore </etc/openclash/china_ip6_route.ipset 2>/dev/null
-   fi
-   
-   #wan local
-   ipset create localwannetwork6 hash:net family inet6
-   wanip6s=$(/usr/share/openclash/openclash_get_network.lua "wanip6")
-   if [ -n "$wanip6s" ]; then
-      for wanip6 in $wanip6s; do
-         ipset add localwannetwork6 "$wanip6" 2>/dev/null
-      done
    fi
    
    #local
@@ -1918,7 +2033,6 @@ if [ "$ipv6_enable" -eq 1 ] && [ -n "$(ip6tables -t mangle -L 2>&1 | grep -o 'Ch
       ip6tables -t mangle -N openclash_output
       ip6tables -t mangle -F openclash_output
       ip6tables -t mangle -A openclash_output -m set --match-set localnetwork6 dst -j RETURN
-      ip6tables -t mangle -A openclash_output -m set --match-set localwannetwork6 src -j RETURN >/dev/null 2>&1
       ip6tables -t mangle -A openclash_output -m set --match-set wan_ac_black_ips dst -j RETURN >/dev/null 2>&1
       ip6tables -t mangle -A openclash_output -m owner ! --uid-owner 65534 -m set ! --match-set common_ports dst -j RETURN >/dev/null 2>&1
       if [ "$china_ip6_route" = "1" ]; then
@@ -1984,14 +2098,12 @@ revert_firewall()
    done >/dev/null 2>&1
 
    ipset destroy localnetwork6 >/dev/null 2>&1
-   ipset destroy localwannetwork6 >/dev/null 2>&1
    ipset destroy china_ip6_route >/dev/null 2>&1
    ipset destroy lan_ac_white_ipv6s >/dev/null 2>&1
    ipset destroy lan_ac_black_ipv6s >/dev/null 2>&1
    ipset destroy wan_ac_black_ipv6s >/dev/null 2>&1
    
    ipset destroy localnetwork >/dev/null 2>&1
-   ipset destroy localwannetwork >/dev/null 2>&1
    ipset destroy china_ip_route >/dev/null 2>&1
    ipset destroy lan_ac_white_ips >/dev/null 2>&1
    ipset destroy lan_ac_black_ips >/dev/null 2>&1
@@ -2038,9 +2150,10 @@ get_config()
    dns_port=$(uci -q get openclash.config.dns_port)
    tolerance=$(uci -q get openclash.config.tolerance)
    custom_fallback_filter=$(uci -q get openclash.config.custom_fallback_filter)
-   netflix_domains_prefetch=$(uci -q get openclash.config.netflix_domains_prefetch || echo 0)
+   stream_domains_prefetch=$(uci -q get openclash.config.stream_domains_prefetch || echo 0)
    append_wan_dns=$(uci -q get openclash.config.append_wan_dns || echo 1)
    store_fakeip=$(uci -q get openclash.config.store_fakeip || echo 1)
+   dns_remote=$(uci -q get openclash.config.dns_remote || echo 1)
    _koolshare=$(cat /usr/lib/os-release 2>/dev/null |grep OPENWRT_RELEASE 2>/dev/null |grep -i koolshare 2>/dev/null)
    [ -z "$dns_port" ] && dns_port=7874 && uci -q set openclash.config.dns_port=7874
    [ "$ipv6_enable" -eq 1 ] && [ "$intranet_allowed" -eq 1 ] && intranet_allowed=0 && uci -q set openclash.config.intranet_allowed=0
@@ -2074,12 +2187,13 @@ start()
       config_foreach yml_auth_get "authentication"
       yml_auth_custom "$CONFIG_FILE"
       yml_dns_custom "$enable_custom_dns" "$CONFIG_FILE" "$append_wan_dns" "$ipv6_dns"
-      /usr/share/openclash/yml_change.sh 2>/dev/null "$LOGTIME" "$en_mode" "$enable_custom_dns" "$da_password" "$cn_port" "$proxy_port" "$CONFIG_FILE" "$ipv6_enable" "$http_port" "$socks_port" "$lan_ip" "$log_level" "$proxy_mode" "$intranet_allowed" "$en_mode_tun" "$stack_type" "$dns_port" "$core_type" "$mixed_port" "$tproxy_port" "$ipv6_dns" "$store_fakeip" "$netflix_domains_prefetch"
+      /usr/share/openclash/yml_change.sh 2>/dev/null "$LOGTIME" "$en_mode" "$enable_custom_dns" "$da_password" "$cn_port" "$proxy_port" "$CONFIG_FILE" "$ipv6_enable" "$http_port" "$socks_port" "$lan_ip" "$log_level" "$proxy_mode" "$intranet_allowed" "$en_mode_tun" "$stack_type" "$dns_port" "$core_type" "$mixed_port" "$tproxy_port" "$ipv6_dns" "$store_fakeip" "$stream_domains_prefetch" "$dns_remote"
       /usr/share/openclash/yml_rules_change.sh 2>/dev/null "$LOGTIME" "$rule_source" "$enable_custom_clash_rules" "$CONFIG_FILE" "$enable_rule_proxy" "$CONFIG_NAME"
       yml_custom_rule_provider
       yml_game_custom
       yml_provider_path "$CONFIG_FILE" "proxy-providers" "proxy_provider"
       yml_provider_path "$CONFIG_FILE" "rule-providers" "rule_provider"
+      yml_vmess_compatible "$CONFIG_FILE" "proxies"
       yml_dns_check "$CONFIG_FILE"  "$FALLBACK_FILTER_FILE"
       yml_tolerance_set "$CONFIG_FILE" "$tolerance"
    fi
@@ -2142,7 +2256,12 @@ stop()
    for watchdog_pid in $watchdog_pids; do
       kill -9 "$watchdog_pid" >/dev/null 2>&1
    done >/dev/null 2>&1
-
+   
+   streaming_unlock_pids=$(unify_ps_pids "openclash_streaming_unlock.lua")
+   for streaming_unlock_pid in $streaming_unlock_pids; do
+      kill -9 "$streaming_unlock_pid" >/dev/null 2>&1
+   done >/dev/null 2>&1
+   
    LOG_OUT "Step 4: Close The Clash Core Process..."
    if [ "$enable" != "1" ]; then
       kill_clash

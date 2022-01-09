@@ -513,6 +513,9 @@ msgstr "必须代理的流量"
 msgid "Apple"
 msgstr "苹果服务（Apple）"
 
+msgid "Google FCM"
+msgstr "谷歌推送（Google FCM）"
+
 msgid "Scholar"
 msgstr "学术网站（Scholar）"
 
@@ -522,8 +525,8 @@ msgstr "微软服务（Microsoft）"
 msgid "Netflix"
 msgstr "奈飞（Netflix）"
 
-msgid "Disney"
-msgstr "迪士尼（Disney）"
+msgid "Disney Plus"
+msgstr "迪士尼+（Disney Plus）"
 
 msgid "Bilibili"
 msgstr "哔哩哔哩（Bilibili）"
@@ -923,6 +926,9 @@ msgstr "代理集路径（Path）"
 msgid "Update Your Proxy Provider File From Config Luci Page"
 msgstr "请先在配置文件管理页面上传您的代理集文件"
 
+msgid "Provider Filter"
+msgstr "代理集节点筛选"
+
 msgid "Provider URL"
 msgstr "代理集URL"
 
@@ -1292,14 +1298,14 @@ msgstr "注意：客户端可能无法更新，因为squashfs格式的固件更�
 msgid "Compiled Version Selected"
 msgstr "已选择编译版本"
 
-msgid "CPU Architecture (OS)"
-msgstr "处理器架构（OS）"
+msgid "Release Branch Selected"
+msgstr "已选择更新分支"
+
+msgid "CPU Architecture"
+msgstr "处理器架构"
 
 msgid "Last Check Update"
 msgstr "上次检查更新时间"
-
-msgid "CPU Architecture (OPKG)"
-msgstr "处理器架构（OPKG）"
 
 msgid "Current Core"
 msgstr "当前内核版本"
@@ -1800,13 +1806,13 @@ msgid "Proxy-providers That no Longer Exists in Subscription"
 msgstr "订阅中已不存在的代理集..."
 
 msgid "Proxies That no Longer Exists in Subscription"
-msgstr "订阅中已不存在的代理集..."
+msgstr "订阅中已不存在的节点..."
 
 msgid "Read Successful!"
 msgstr "读取完成！"
 
 msgid "Write Successful!"
-msgstr "读取完成！"
+msgstr "写入完成！"
 
 msgid "Creating By Using Connershua (rule set) Rules..."
 msgstr "使用ConnersHua(规则集)规则创建中..."
@@ -2204,9 +2210,6 @@ msgstr "警告：【Rule】写法已不再支持，自动替换为rules"
 msgid "Warning: rule-provider is no longer used. Auto replaced by rule-providers"
 msgstr "警告：【rule-provider】写法已不再支持，自动替换为rule-providers"
 
-msgid "Warning: Because of No Rules Field, Stop Setting BT/P2P DIRECT Rules!"
-msgstr "警告：未找到【rules】配置，停止添加BT/P2P直连规则！"
-
 msgid "Error: Load File Error,"
 msgstr "错误：文件解析失败，"
 
@@ -2384,23 +2387,29 @@ msgstr "被修改，暂停快速启动..."
 msgid "Click to Update"
 msgstr "点击更新规则"
 
-msgid "Prefetch Netflix Domains"
-msgstr "实验性：预解析 Netflix 域名"
+msgid "Prefetch Netflix, Disney Plus Domains"
+msgstr "实验性：预解析 Netflix、Disney Plus 域名"
 
 msgid "Prevent Some Devices From Directly Using IP Access To Cause Unlocking Failure"
 msgstr "防止部分设备直接使用IP访问导致DNS解锁失败"
 
-msgid "Update Netflix Domains List"
-msgstr "更新 Netflix 域名列表"
+msgid "Update Preset Domains List"
+msgstr "更新预置域名列表"
 
-msgid "Netflix Domains Prefetch Interval(min)"
-msgstr "Netflix 域名预解析间隔（分钟）"
+msgid "Domains Prefetch Interval(min)"
+msgstr "域名预解析间隔（分钟）"
 
 msgid "Tip: Start Prefetch Netflix Domains..."
 msgstr "提示：开始预解析 Netflix 域名..."
 
-msgid "Tip: Netflix Domains Prefetch Finished..."
-msgstr "提示：Netflix 域名预解析完成..."
+msgid "Tip: Netflix Domains Prefetch Finished!"
+msgstr "提示：Netflix 域名预解析完成!"
+
+msgid "Tip: Start Prefetch Disney Plus Domains..."
+msgstr "提示：开始预解析 Disney Plus 域名..."
+
+msgid "Tip: Disney Plus Domains Prefetch Finished!"
+msgstr "提示：Disney Plus 域名预解析完成!"
 
 msgid "Persistence Fake-IP"
 msgstr "Fake-IP 持久化"
@@ -2426,6 +2435,9 @@ msgstr "抓取结果将自动保存"
 msgid "Click to Catch"
 msgstr "手动抓取域名"
 
+msgid "Catch Netflix"
+msgstr "手动抓取 Netflix 域名"
+
 msgid "No domain names were catched..."
 msgstr "未抓取到任何域名..."
 
@@ -2443,3 +2455,153 @@ msgstr "指定出口网卡"
 
 msgid "routing-mark"
 msgstr "指定路由标记"
+
+msgid "Streaming Enhance"
+msgstr "流媒体增强"
+
+msgid "Auto Select Unlock Proxy"
+msgstr "自动选择解锁节点"
+
+msgid "Auto Select Proxy For Streaming Unlock, Support Netflix, Disney Plus, HBO And YouTube Premium, etc"
+msgstr "自动选择解锁节点，支持 Netflix、Disney Plus、HBO 和 YouTube Premium 等"
+
+msgid "Auto Select Interval(min)"
+msgstr "自动选择（检测）间隔（分钟）"
+
+msgid "Expand Group"
+msgstr "展开策略组"
+
+msgid "Automatically Expand The Group When Selected"
+msgstr "自动展开嵌套的策略组并进行解锁检测，启用后可能会造成网络不稳定"
+
+msgid "Netflix Group Filter Keywords"
+msgstr "Netflix 策略组筛选关键字"
+
+msgid "Disney Plus Group Filter Keywords"
+msgstr "Disney Plus 策略组筛选关键字"
+
+msgid "HBO Now Group Filter Keywords"
+msgstr "HBO Now 策略组筛选关键字"
+
+msgid "HBO Max Group Filter Keywords"
+msgstr "HBO Max 策略组筛选关键字"
+
+msgid "HBO GO Asia Group Filter Keywords"
+msgstr "HBO GO Asia 策略组筛选关键字"
+
+msgid "YouTube Premium Group Filter Keywords"
+msgstr "YouTube Premium 策略组筛选关键字"
+
+msgid "TVB Anywhere+ Group Filter Keywords"
+msgstr "TVB Anywhere+ 策略组筛选关键字"
+
+msgid "Amazon Prime Video Group Filter Keywords"
+msgstr "Amazon Prime Video 策略组筛选关键字"
+
+msgid "Tip: Start Auto Select Proxy For Netflix Unlock..."
+msgstr "提示：开始自动选择（检测）Netflix 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For Disney Plus Unlock..."
+msgstr "提示：开始自动选择（检测）Disney Plus 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For HBO Now Unlock..."
+msgstr "提示：开始自动选择（检测）HBO Now 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For HBO Max Unlock..."
+msgstr "提示：开始自动选择（检测）HBO Max 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For HBO GO Asia Unlock..."
+msgstr "提示：开始自动选择（检测）HBO GO Asia 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For YouTube Premium Unlock..."
+msgstr "提示：开始自动选择（检测）YouTube Premium 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For TVB Anywhere+ Unlock..."
+msgstr "提示：开始自动选择（检测）TVB Anywhere+ 解锁节点..."
+
+msgid "Tip: Start Auto Select Proxy For Amazon Prime Video Unlock..."
+msgstr "提示：开始自动选择（检测）Amazon Prime Video 解锁节点..."
+
+msgid "Netflix Group:"
+msgstr "Netflix 策略组："
+
+msgid "Disney Plus Group:"
+msgstr "Disney Plus 策略组："
+
+msgid "HBO Now Group:"
+msgstr "HBO Now 策略组："
+
+msgid "HBO Max Group:"
+msgstr "HBO Max 策略组："
+
+msgid "HBO GO Asia Group:"
+msgstr "HBO GO Asia 策略组："
+
+msgid "TVB Anywhere+ Group:"
+msgstr "TVB Anywhere+ 策略组："
+
+msgid "Amazon Prime Video Group:"
+msgstr "Amazon Prime Video 策略组："
+
+msgid "YouTube Premium Group:"
+msgstr "YouTube Premium 策略组："
+
+msgid "full support."
+msgstr "完整解锁。"
+
+msgid "full support, area:"
+msgstr "完整解锁，区域："
+
+msgid "only support homemade!"
+msgstr "仅支持自制剧！"
+
+msgid "unlock test faild!"
+msgstr "解锁检测失败！"
+
+msgid "the type of group is not select, auto select could not work!"
+msgstr "当前策略组类型非Select，无法进行自动选择！"
+
+msgid "Start auto select unlock proxy..."
+msgstr "开始进行解锁节点自动选择..."
+
+msgid "only support homemade! the type of group is not select, auto select could not work!"
+msgstr "仅支持自制剧！当前策略组类型非 Select，无法进行自动选择！"
+
+msgid "unlock test faild! the type of group is not select, auto select could not work!"
+msgstr "解锁检测失败！当前策略组类型非 Select，无法进行自动选择！"
+
+msgid "only support homemade! start auto select unlock proxy..."
+msgstr "仅支持自制剧！开始进行解锁节点自动选择..."
+
+msgid "unlock test faild! start auto select unlock proxy..."
+msgstr "解锁检测失败！开始进行解锁节点自动选择..."
+
+msgid "It Will Be Searched According To The Keywords When Auto Search Group Fails"
+msgstr "策略组自动获取失败时将会根据关键字进行匹配"
+
+msgid "not support unlock!"
+msgstr "不支持解锁！"
+
+msgid "not support unlock! the type of group is not select, auto select could not work!"
+msgstr "不支持解锁！当前策略组类型非 Select，无法进行自动选择！"
+
+msgid "not support unlock! start auto select unlock proxy..."
+msgstr "不支持解锁！开始进行解锁节点自动选择..."
+
+msgid "unlock node auto selected successfully, the current selected is"
+msgstr "解锁节点自动选择成功，当前选择的是"
+
+msgid "unlock node auto selected failed, no node available, rolled back to the"
+msgstr "解锁节点自动选择失败，无可用节点，回退到"
+
+msgid ", area:"
+msgstr "，区域："
+
+msgid "failed to search based on keywords and automatically obtain the group, please confirm the validity of the keywords!"
+msgstr "根据关键字搜索且自动获取策略组失败，请确认关键字的有效性！"
+
+msgid "DNS Remote"
+msgstr "*远程域名解析"
+
+msgid "Add DNS Remote Support For Redir-Host"
+msgstr "Redir-Host模式强制进行远程域名解析"

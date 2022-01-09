@@ -13,10 +13,19 @@ urlencode() {
 }
 
    RULE_FILE_NAME="$1"
+   RELEASE_BRANCH=$(uci -q get openclash.config.release_branch || echo "master")
    if [ "$1" == "netflix_domains" ]; then
-      DOWNLOAD_PATH="https://cdn.jsdelivr.net/gh/vernesong/OpenClash@master/luci-app-openclash/root/usr/share/openclash/res/Netflix_Domains.list"
+      DOWNLOAD_PATH="https://raw.githubusercontent.com/vernesong/OpenClash/$RELEASE_BRANCH/luci-app-openclash/root/usr/share/openclash/res/Netflix_Domains.list"
+      DOWNLOAD_PATH2="https://cdn.jsdelivr.net/gh/vernesong/OpenClash@$RELEASE_BRANCH/luci-app-openclash/root/usr/share/openclash/res/Netflix_Domains.list"
       RULE_FILE_DIR="/usr/share/openclash/res/Netflix_Domains.list"
+      RULE_FILE_NAME="Netflix_Domains"
       RULE_TYPE="netflix"
+   elif [ "$1" == "disney_domains" ]; then
+      DOWNLOAD_PATH="https://raw.githubusercontent.com/vernesong/OpenClash/$RELEASE_BRANCH/luci-app-openclash/root/usr/share/openclash/res/Disney_Plus_Domains.list"
+      DOWNLOAD_PATH2="https://cdn.jsdelivr.net/gh/vernesong/OpenClash@$RELEASE_BRANCH/luci-app-openclash/root/usr/share/openclash/res/Disney_Plus_Domains.list"
+      RULE_FILE_DIR="/usr/share/openclash/res/Disney_Plus_Domains.list"
+      RULE_FILE_NAME="Disney_Plus_Domains"
+      RULE_TYPE="disney"
    elif [ -z "$(grep "$RULE_FILE_NAME" /usr/share/openclash/res/rule_providers.list 2>/dev/null)" ]; then
       DOWNLOAD_PATH=$(grep -F "$RULE_FILE_NAME" /usr/share/openclash/res/game_rules.list |awk -F ',' '{print $2}' 2>/dev/null)
       RULE_FILE_DIR="/etc/openclash/game_rules/$RULE_FILE_NAME"
@@ -35,10 +44,18 @@ urlencode() {
 
    TMP_RULE_DIR="/tmp/$RULE_FILE_NAME"
    TMP_RULE_DIR_TMP="/tmp/$RULE_FILE_NAME.tmp"
-   [ "$RULE_TYPE" != "netflix" ] && DOWNLOAD_PATH=$(urlencode "$DOWNLOAD_PATH")
+   [ "$RULE_TYPE" != "netflix" ] && [ "$RULE_TYPE" != "disney" ] && DOWNLOAD_PATH=$(urlencode "$DOWNLOAD_PATH")
    
    if [ "$RULE_TYPE" = "netflix" ]; then
       curl -sL --connect-timeout 5 --retry 2 "$DOWNLOAD_PATH" -o "$TMP_RULE_DIR" >/dev/null 2>&1
+      if [ "$?" -ne "0" ]; then
+         curl -sL --connect-timeout 5 --retry 2 "$DOWNLOAD_PATH2" -o "$TMP_RULE_DIR" >/dev/null 2>&1
+      fi
+   elif [ "$RULE_TYPE" = "disney" ]; then
+      curl -sL --connect-timeout 5 --retry 2 "$DOWNLOAD_PATH" -o "$TMP_RULE_DIR" >/dev/null 2>&1
+      if [ "$?" -ne "0" ]; then
+         curl -sL --connect-timeout 5 --retry 2 "$DOWNLOAD_PATH2" -o "$TMP_RULE_DIR" >/dev/null 2>&1
+      fi
    elif [ "$RULE_TYPE" = "game" ]; then
       if pidof clash >/dev/null; then
    	     curl -sL --connect-timeout 5 --retry 2 https://raw.githubusercontent.com/FQrabbit/SSTap-Rule/master/rules/"$DOWNLOAD_PATH" -o "$TMP_RULE_DIR" >/dev/null 2>&1
@@ -55,7 +72,7 @@ urlencode() {
       fi
    fi
 
-   if [ "$?" -eq "0" ] && [ -s "$TMP_RULE_DIR" ] && [ -z "$(grep "404: Not Found" "$TMP_RULE_DIR")" ]; then
+   if [ "$?" -eq "0" ] && [ -s "$TMP_RULE_DIR" ] && [ -z "$(grep "404: Not Found" "$TMP_RULE_DIR")" ] && [ -z "$(grep "Package size exceeded the configured limit" "$TMP_RULE_DIR")" ]; then
       if [ "$RULE_TYPE" = "game" ]; then
       	cat "$TMP_RULE_DIR" |sed '/^#/d' 2>/dev/null |sed '/^ *$/d' 2>/dev/null |awk '{print "  - "$0}' > "$TMP_RULE_DIR_TMP" 2>/dev/null
       	sed -i '1i\payload:' "$TMP_RULE_DIR_TMP" 2>/dev/null
