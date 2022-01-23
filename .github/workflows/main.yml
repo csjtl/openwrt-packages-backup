@@ -49,6 +49,7 @@ jobs:
         }
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
+        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean
 
     - name: Apply
       run: |
