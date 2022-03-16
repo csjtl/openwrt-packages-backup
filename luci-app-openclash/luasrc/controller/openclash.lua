@@ -30,6 +30,7 @@ function index()
 	entry({"admin", "services", "openclash", "opupdate"},call("action_opupdate"))
 	entry({"admin", "services", "openclash", "coreupdate"},call("action_coreupdate"))
 	entry({"admin", "services", "openclash", "ping"}, call("act_ping"))
+	entry({"admin", "services", "openclash", "flush_fakeip_cache"}, call("action_flush_fakeip_cache"))
 	entry({"admin", "services", "openclash", "download_rule"}, call("action_download_rule"))
 	entry({"admin", "services", "openclash", "download_netflix_domains"}, call("action_download_netflix_domains"))
 	entry({"admin", "services", "openclash", "download_disney_domains"}, call("action_download_disney_domains"))
@@ -60,9 +61,11 @@ function index()
 	entry({"admin", "services", "openclash", "switch_rule_mode"}, call("action_switch_rule_mode"))
 	entry({"admin", "services", "openclash", "switch_run_mode"}, call("action_switch_run_mode"))
 	entry({"admin", "services", "openclash", "get_run_mode"}, call("action_get_run_mode"))
+	entry({"admin", "services", "openclash", "create_file"}, call("create_file"))
 	entry({"admin", "services", "openclash", "settings"},cbi("openclash/settings"),_("Global Settings"), 30).leaf = true
 	entry({"admin", "services", "openclash", "servers"},cbi("openclash/servers"),_("Servers and Groups"), 40).leaf = true
 	entry({"admin", "services", "openclash", "other-rules-edit"},cbi("openclash/other-rules-edit"), nil).leaf = true
+	entry({"admin", "services", "openclash", "other-file-edit"},cbi("openclash/other-file-edit"), nil).leaf = true
 	entry({"admin", "services", "openclash", "rule-providers-settings"},cbi("openclash/rule-providers-settings"),_("Rule Providers and Groups"), 50).leaf = true
 	entry({"admin", "services", "openclash", "game-rules-manage"},form("openclash/game-rules-manage"), nil).leaf = true
 	entry({"admin", "services", "openclash", "rule-providers-manage"},form("openclash/rule-providers-manage"), nil).leaf = true
@@ -107,10 +110,10 @@ end
 
 local function is_watchdog()
 	local ps_version = luci.sys.exec("ps --version 2>&1 |grep -c procps-ng |tr -d '\n'")
-	if ps_version == "0" then
-		return luci.sys.call("ps |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
+	if ps_version == "1" then
+		return luci.sys.call("ps -efw |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
 	else
-		return luci.sys.call("ps -ef |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
+		return luci.sys.call("ps -w |grep openclash_watchdog.sh |grep -v grep >/dev/null") == 0
 	end
 end
 
@@ -274,6 +277,10 @@ local function corever()
 	return uci:get("openclash", "config", "core_version")
 end
 
+local function release_branch()
+	return uci:get("openclash", "config", "release_branch")
+end
+
 local function save_corever_branch()
 	if luci.http.formvalue("core_ver") then
 		uci:set("openclash", "config", "core_version", luci.http.formvalue("core_ver"))
@@ -303,8 +310,8 @@ end
 local function historychecktime()
 	local CONFIG_FILE = uci:get("openclash", "config", "config_path")
 	if not CONFIG_FILE then return "0" end
-  local HISTORY_PATH_OLD = "/etc/openclash/history/" .. fs.filename(fs.basename(CONFIG_FILE))
-  local HISTORY_PATH = "/etc/openclash/history/" .. fs.filename(fs.basename(CONFIG_FILE)) .. ".db"
+	local HISTORY_PATH_OLD = "/etc/openclash/history/" .. fs.filename(fs.basename(CONFIG_FILE))
+	local HISTORY_PATH = "/etc/openclash/history/" .. fs.filename(fs.basename(CONFIG_FILE)) .. ".db"
 	if not nixio.fs.access(HISTORY_PATH) and not nixio.fs.access(HISTORY_PATH_OLD) then
   	return "0"
 	else
@@ -326,6 +333,21 @@ end
 function download_netflix_domains()
   local state = luci.sys.call(string.format('/usr/share/openclash/openclash_download_rule_list.sh "%s" >/dev/null 2>&1',"netflix_domains"))
   return state
+end
+
+function action_flush_fakeip_cache()
+	local state = 0
+	if is_running() then
+		local daip = daip()
+		local dase = dase() or ""
+		local cn_port = cn_port()
+		if not daip or not cn_port then return end
+  	state = luci.sys.exec(string.format('curl -sL -m 3 -H "Content-Type: application/json" -H "Authorization: Bearer %s" -XPOST http://"%s":"%s"/cache/fakeip/flush', dase, daip, cn_port))
+  end
+  luci.http.prepare_content("application/json")
+	luci.http.write_json({
+		flush_status = state;
+	})
 end
 
 function action_restore_config()
@@ -919,6 +941,7 @@ function action_update()
 			coretuncv = coretuncv(),
 			opcv = opcv(),
 			corever = corever(),
+			release_branch = release_branch(),
 			upchecktime = upchecktime(),
 			corelv = corelv(),
 			oplv = oplv();
@@ -1044,6 +1067,7 @@ function action_refresh_log()
    				local a = string.find (line, "【")
    				local b = string.find (line, "】") + 2
    				local c = 21
+   				local d = 0
    				local v
    				local x
    				while true do
@@ -1060,16 +1084,23 @@ function action_refresh_log()
    					x = no_trans[k]
    					v = no_trans[k+1]
    					if x <= 21 then
-   						line_trans = line_trans .. string.sub(line, 0, v)
+   						line_trans = line_trans .. luci.i18n.translate(string.sub(line, d, x - 1)) .. string.sub(line, x, v)
+   						d = v + 1
    					elseif v <= string.len(line) then
    						line_trans = line_trans .. luci.i18n.translate(string.sub(line, c, x - 1)) .. string.sub(line, x, v)
    					end
    					c = v + 1
    				end
    				if c > string.len(line) then
-   					line_trans = string.sub(line, 0, 20) .. line_trans
+   					if d == 0 then
+   						line_trans = string.sub(line, 0, 20) .. line_trans
+   					end
    				else
-   					line_trans = string.sub(line, 0, 20) .. line_trans .. luci.i18n.translate(string.sub(line, c, -1))
+   					if d == 0 then
+   						line_trans = string.sub(line, 0, 20) .. line_trans .. luci.i18n.translate(string.sub(line, c, -1))
+   					else
+   						line_trans = line_trans .. luci.i18n.translate(string.sub(line, c, -1))
+   					end
    				end
    			end
 			end
@@ -1239,5 +1270,16 @@ function ltn12_popen(command)
 		fdi:close()
 		fdo:close()
 		nixio.exec("/bin/sh", "-c", command)
+	end
+end
+
+function create_file()
+	local file_name = luci.http.formvalue("filename")
+	local file_path = luci.http.formvalue("filepath")..file_name
+	fs.writefile(file_path, "")
+	if fs.isfile(file_path) then
+		return
+	else
+		luci.http.status(500, "Create File Faild")
 	end
 end

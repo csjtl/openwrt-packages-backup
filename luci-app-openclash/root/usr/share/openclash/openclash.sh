@@ -43,6 +43,11 @@ kill_watchdog() {
    for watchdog_pid in $watchdog_pids; do
       kill -9 "$watchdog_pid" >/dev/null 2>&1
    done
+   
+   streaming_unlock_pids=$(unify_ps_pids "openclash_streaming_unlock.lua")
+   for streaming_unlock_pid in $streaming_unlock_pids; do
+      kill -9 "$streaming_unlock_pid" >/dev/null 2>&1
+   done >/dev/null 2>&1
 }
 
 config_download()
@@ -157,7 +162,7 @@ config_cus_up()
 config_su_check()
 {
    LOG_OUT "Config File Download Successful, Check If There is Any Update..."
-   sed -i 's/!<str> //g' "$CFG_FILE" >/dev/null 2>&1
+   sed -i 's/!<str> /!!str /g' "$CFG_FILE" >/dev/null 2>&1
    if [ -f "$CONFIG_FILE" ]; then
       cmp -s "$BACKPACK_FILE" "$CFG_FILE"
       if [ "$?" -ne 0 ]; then
@@ -405,11 +410,10 @@ sub_info_get()
    config_get "convert_address" "$section" "convert_address" ""
    config_get "template" "$section" "template" ""
    config_get "node_type" "$section" "node_type" ""
+   config_get "rule_provider" "$section" "rule_provider" ""
    config_get "custom_template_url" "$section" "custom_template_url" ""
    config_get "de_ex_keyword" "$section" "de_ex_keyword" ""
    
-   
-
    if [ "$enabled" -eq 0 ]; then
       return
    fi
@@ -419,9 +423,15 @@ sub_info_get()
    fi
    
    if [ "$udp" == "true" ]; then
-      udp="udp=true"
+      udp="&udp=true"
    else
       udp=""
+   fi
+   
+   if [ "$rule_provider" == "true" ]; then
+      rule_provider="&expand=false&classic=true"
+   else
+      rule_provider=""
    fi
    
    if [ -z "$name" ]; then
@@ -462,7 +472,7 @@ sub_info_get()
          template_path_encode=$(urlencode "$template_path")
       	 [ -n "$key_match_param" ] && key_match_param="(?i)$(urlencode "$key_match_param")"
       	 [ -n "$key_ex_match_param" ] && key_ex_match_param="(?i)$(urlencode "$key_ex_match_param")"
-         subscribe_url_param="?target=clash&new_name=true&url=$subscribe_url&config=$template_path_encode&include=$key_match_param&exclude=$key_ex_match_param&emoji=$emoji&list=false&sort=$sort&$udp&scv=$skip_cert_verify&append_type=$node_type&fdn=true"
+         subscribe_url_param="?target=clash&new_name=true&url=$subscribe_url&config=$template_path_encode&include=$key_match_param&exclude=$key_ex_match_param&emoji=$emoji&list=false&sort=$sort$udp&scv=$skip_cert_verify&append_type=$node_type&fdn=true$rule_provider"
          c_address="$convert_address"
       else
          subscribe_url=$address
