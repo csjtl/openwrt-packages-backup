@@ -53,6 +53,7 @@ jobs:
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
         svn export https://github.com/coolsnowwolf/luci/trunk/applications/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/applications/luci-app-diskman
+        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean/automount
 
     - name: Apply
       run: |
