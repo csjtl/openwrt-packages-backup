@@ -56,6 +56,7 @@ jobs:
         
         svn export https://github.com/coolsnowwolf/lede/trunk/package/lean/automount
         svn export https://github.com/coolsnowwolf/lede/trunk/package/lean/ntfs3-mount
+        svn export https://github.com/coolsnowwolf/lede/trunk/package/lean/ntfs3-oot
 
     - name: Apply
       run: |
