@@ -51,7 +51,9 @@ jobs:
         }
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
+        
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
+        svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
 
     - name: Apply
       run: |
