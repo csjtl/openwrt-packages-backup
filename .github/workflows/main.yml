@@ -4,7 +4,13 @@
 
 name: Update-packages
 
-on: 
+on:
+  push:
+    paths:
+      - '.github/workflows/main.yml'
+  watch:
+    types: started
+  repository_dispatch:
   workflow_dispatch:
 
 jobs:
