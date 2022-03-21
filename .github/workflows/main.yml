@@ -57,6 +57,18 @@ jobs:
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
 
+    - name: packages
+      run: |
+        shopt -s extglob
+        
+        for ipk in $(ls -d applications/!(luci-app-rclone)/); do
+        	if [[ $(ls $ipk/po | wc -l) -gt 3 ]]; then
+            rm -rf $ipk
+        	fi
+        done
+        
+        rm -Rf */.git
+
     - name: Apply
       run: |
         git add .
