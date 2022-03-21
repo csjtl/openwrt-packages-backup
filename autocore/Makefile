@@ -15,7 +15,9 @@ PKG_RELEASE:=27
 include $(INCLUDE_DIR)/package.mk
 
 define Package/autocore
-  TITLE:=auto core loadbalance script.
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=ARM auto core script.
   MAINTAINER:=Lean.and.K
   DEPENDS:=bc +lm-sensors +ethtool
 endef
