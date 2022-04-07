@@ -17,7 +17,7 @@ on:
 
 jobs:
   update:
-    runs-on: Ubuntu-20.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout
@@ -35,7 +35,7 @@ jobs:
       run: |
         shopt -s extglob
         rm -rf !(README.md)
-        git rm -r --cache * >/dev/null 2>&1 & rm -rf `find ./* -maxdepth 0 -type d ! -name "diy"` >/dev/null 2>&1
+
         function git_clone() (
           git clone --depth 1 $1 $2 || true
         )
@@ -76,7 +76,7 @@ jobs:
       run: |
         git add .
         git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
-        git reset --soft HEAD^
+        #git reset --soft HEAD^
         git add .
         git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
         git push
