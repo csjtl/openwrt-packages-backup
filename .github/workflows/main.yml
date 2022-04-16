@@ -55,7 +55,7 @@ jobs:
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
         svn export https://github.com/kiddin9/openwrt-packages/trunk/my-autocore
-        
+        mv my-autocore autocore
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
 
@@ -73,9 +73,6 @@ jobs:
 
     - name: Apply
       run: |
-        git add .
-        git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
-        #git reset --soft HEAD^
         git add .
         git commit -m "$(date +%Y-%m-%d" "%H:%M:%S)" || true
         git push
