@@ -34,7 +34,7 @@ jobs:
     - name: Syn upstream
       run: |
         shopt -s extglob
-        rm -rf !(README.md)
+        rm -rf !(autocore|README.md)
         function git_clone() (
           git clone --depth 1 $1 $2 || true
         )
@@ -54,9 +54,7 @@ jobs:
         }
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-        svn export https://github.com/immortalwrt/immortalwrt/trunk/package/emortal
-        mv emortal/autocore .
-        rm -rf emortal
+        #svn export https://github.com/immortalwrt/immortalwrt/trunk/package/emortal
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
 
