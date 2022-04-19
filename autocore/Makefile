@@ -53,7 +53,7 @@ define Package/autocore/install/Default
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status/include
 	$(INSTALL_DATA) ./files/generic/21_ethinfo.js $(1)/www/luci-static/resources/view/status/include/
 
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index/
 	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
