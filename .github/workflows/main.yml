@@ -1,5 +1,7 @@
+#
+# This is free software, lisence use MIT.
+# 
 name: Update-packages
-
 on:
   push:
     paths:
@@ -10,17 +12,14 @@ on:
     types: started
   repository_dispatch:
   workflow_dispatch:
-
 jobs:
   update:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout
       uses: actions/checkout@main
       with:
         fetch-depth: 0
-
     - name: Set git identity
       run : |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -29,6 +28,7 @@ jobs:
     - name: Syn upstream
       run: |
         shopt -s extglob
+        rm -rf !(README.md)
         rm -rf !(autocore|README.md)
         function git_clone() (
           git clone --depth 1 $1 $2 || true
@@ -49,7 +49,9 @@ jobs:
         }
         
         svn export https://github.com/vernesong/OpenClash/trunk/luci-app-openclash
-        #svn export https://github.com/kiddin9/openwrt-packages/trunk/my-autocore
+        svn export https://github.com/immortalwrt/immortalwrt/trunk/package/emortal
+        mv emortal/autocore .
+        rm -rf emortal
         #svn export https://github.com/immortalwrt/immortalwrt/trunk/package/emortal
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
@@ -75,4 +77,3 @@ jobs:
       with:
         retain_days: 1
         keep_minimum_runs: 3
-        
