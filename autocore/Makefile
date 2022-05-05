@@ -52,6 +52,9 @@ define Package/autocore/install/Default
 
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status/include
 	$(INSTALL_DATA) ./files/generic/21_ethinfo.js $(1)/www/luci-static/resources/view/status/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index/
+	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
 define Package/autocore-arm/install
@@ -67,6 +70,9 @@ define Package/autocore-x86/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/x86/autocore $(1)/etc/init.d/
+
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index/
+	$(INSTALL_DATA) ./files/x86/nvme_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
 $(eval $(call BuildPackage,autocore-arm))
