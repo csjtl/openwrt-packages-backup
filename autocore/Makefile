@@ -9,8 +9,10 @@ PKG_RELEASE:=$(COMMITCOUNT)
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_TARGET_bcm27xx \
 	CONFIG_TARGET_bcm53xx
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/target.mk
+
 define Package/autocore-arm
   TITLE:=ARM auto core script.
   MAINTAINER:=CN_SZTL
@@ -19,14 +21,17 @@ define Package/autocore-arm
     +TARGET_bcm53xx:nvram
   VARIANT:=arm
 endef
+
 define Package/autocore-x86
   TITLE:=x86/x64 auto core loadbalance script.
   MAINTAINER:=Lean / CN_SZTL
   DEPENDS:=@TARGET_x86 +lm-sensors +ethtool
   VARIANT:=x86
 endef
+
 define Build/Compile
 endef
+
 define Package/autocore/install/Default
 	$(INSTALL_DIR) $(1)/etc
 	$(CP) ./files/generic/10_system.js $(1)/etc/rpcd_10_system.js
@@ -34,24 +39,26 @@ define Package/autocore/install/Default
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/generic/090-cover-index_files $(1)/etc/uci-defaults/
 	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/generic/cpuinfo $(1)/sbin/
-	$(INSTALL_BIN) ./files/generic/ethinfo $(1)/sbin/
+	$(INSTALL_BIN) ./files/generic/cpuinfo $(1)/sbin/cpuinfo
+	$(INSTALL_BIN) ./files/generic/ethinfo $(1)/sbin/ethinfo
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(CP) ./files/generic/luci-mod-status-autocore.json $(1)/usr/share/rpcd/acl.d/
 
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/status/include
 	$(INSTALL_DATA) ./files/generic/21_ethinfo.js $(1)/www/luci-static/resources/view/status/include/
+endef
+
+define Package/autocore-arm/install
+	$(call Package/autocore/install/Default,$(1))
+
+ifneq ($(filter ipq% %mt7622, $(TARGETID)),)
+	$(INSTALL_BIN) ./files/arm/tempinfo $(1)/sbin/tempinfo
+endif
 
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
 	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
-define Package/autocore-arm/install
-	$(call Package/autocore/install/Default,$(1))
-ifneq ($(filter ipq% %mt7622, $(TARGETID)),)
-	$(INSTALL_BIN) ./files/arm/tempinfo $(1)/sbin/
-endif
-endef
 define Package/autocore-x86/install
 	$(call Package/autocore/install/Default,$(1))
 
@@ -60,6 +67,9 @@ define Package/autocore-x86/install
 
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index/
 	$(INSTALL_DATA) ./files/x86/nvme_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
+	
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
+	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
 $(eval $(call BuildPackage,autocore-arm))
