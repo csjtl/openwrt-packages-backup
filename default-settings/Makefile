@@ -15,3 +15,11 @@ define Package/default-settings
   PKGARCH:=all
   DEPENDS:=+luci-base +bash
 endef
+
+define Build/Compile
+endef
+
+define Package/default-settings/install
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-default-settings $(1)/etc/uci-defaults/
+endef
