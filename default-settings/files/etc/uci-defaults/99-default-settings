@@ -1,0 +1,76 @@
+#!/bin/sh
+
+version=`uci -q get base_config.@status[0].version`
+
+uci set luci.main.lang=auto
+uci commit luci
+
+[ -f '/bin/bash' ] && sed -i 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/bin/bash|g' /etc/passwd
+
+test $version -lt 1 && {
+	uci -q set luci.main.lang='auto'
+	uci -q set luci.main.mediaurlbase=/luci-static/Bootstrap
+	uci commit luci
+	
+	uci -q set dropbear.@dropbear[0].Interface='lan'
+	uci commit dropbear
+	
+	uci -q get system.@system[0] >/dev/null 2>&1 && {
+		uci -q set system.@system[0].zonename='Asia/Shanghai'
+		uci -q set system.@system[0].timezone='CST-8'
+		uci -q del system.ntp.server
+		uci -q add_list system.ntp.server='ntp.aliyun.com'
+		uci -q add_list system.ntp.server='0.openwrt.pool.ntp.org'
+		uci commit system
+	}
+	
+	(echo "root"; sleep 1; echo "root") | /bin/busybox passwd root >/dev/null 2>&1 &
+	
+	wifi_setup_radio(){
+	local radio=$1
+	htmode="$(uci get wireless.${radio}.htmode)"
+	local widx=0
+	while uci rename wireless.@wifi-iface[$widx]=default_radio$widx >/dev/null 2>&1; do widx=$((widx+1)); done
+	uci -q get wireless.${radio} >/dev/null 2>&1 && {
+			uci -q del wireless.${radio}.disabled
+			uci -q set wireless.${radio}.country='AU'
+			uci -q set wireless.${radio}.channel='auto'
+		
+		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
+			uci -q set wireless.default_${radio}.ssid="${SSID}_5G"
+			if test -z "${htmode##HE*}"; then
+				uci -q set wireless.${radio}.htmode="HE160"
+			else
+				uci -q set wireless.${radio}.htmode="VHT80"
+			fi
+		else
+			uci -q set wireless.${radio}.htmode="HT40"
+			uci -q set wireless.default_${radio}.ssid="${SSID}_2.4G"
+		fi
+			uci -q set wireless.default_${radio}.device="${radio}"
+			if [ "${SSID_PASSWD}" ]; then
+				uci -q set wireless.default_${radio}.encryption='psk2'
+				uci -q set wireless.default_${radio}.key="${SSID_PASSWD}"
+			else
+				uci -q set wireless.default_${radio}.encryption='none'
+			fi
+		}
+	}
+
+	[ -f /etc/config/wireless ] && {
+		SSID=${hostname}
+		SSID_PASSWD=""
+		for radio in radio0 radio1 radio2 radio3; do
+			wifi_setup_radio ${radio}
+		done
+		uci commit wireless
+	}
+ 
+	uci -q set network.lan.ipaddr="10.0.0.1"
+	uci -q set network.@globals[0].packet_steering=1
+	uci commit network
+}
+
+
+
+
