@@ -53,11 +53,14 @@ jobs:
         svn export https://github.com/immortalwrt/immortalwrt/trunk/package/emortal
         mv emortal/autocore .
         rm -rf emortal
+        
+        svn export https://github.com/kiddin9/openwrt-packages/trunk/my-default-settings
 
         svn export https://github.com/kiddin9/openwrt-packages/trunk/luci-app-filetransfer
         svn export https://github.com/coolsnowwolf/luci/trunk/libs/luci-lib-fs
         
         git_clone https://github.com/kenzok78/luci-app-fileassistant.git
+        
     - name: packages
       run: |
         shopt -s extglob
