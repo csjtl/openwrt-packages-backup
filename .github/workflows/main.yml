@@ -29,7 +29,7 @@ jobs:
       run: |
         shopt -s extglob
         rm -rf !(README.md)
-        rm -rf !(autocore|README.md)
+        rm -rf !(autocore|README.md|default-settings)
         function git_clone() (
           git clone --depth 1 $1 $2 || true
         )
