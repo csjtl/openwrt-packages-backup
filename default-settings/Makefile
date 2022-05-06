@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_NAME:=my-default-settings
+PKG_NAME:=default-settings
 PKG_VERSION:=1
-PKG_RELEASE:=105
+PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -18,34 +18,16 @@ define Package/$(PKG_NAME)
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=Default Settings
-  MAINTAINER:=Kiddin'
   PKGARCH:=all
   DEPENDS:=+luci-base +bash
-endef
-
-define Package/$(PKG_NAME)/conffiles
-/etc/config/
-/etc/nginx/
-endef
-
-define Build/Prepare
-	chmod -R +x ./files/bin ./files/sbin ./files/etc/profile.d ./files/etc/rc.d ./files/usr/share target/*/{*,}/files/{etc/init.d,usr/bin} >/dev/null || true
 endef
 
 define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(CP) ./files/* $(1)/
-	echo $(BOARD)$(TARGETID)
-	if [ -d ./target/$(BOARD)/files/. ]; then \
-		$(CP) ./target/$(BOARD)/files/* $(1)/; \
-	fi
-	if [ -d ./target/$(TARGETID)/files/. ]; then \
-		$(CP) ./target/$(TARGETID)/files/* $(1)/; \
-	fi; \
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
-	po2lmo ./po/zh_Hans/default.po $(1)/usr/lib/lua/luci/i18n/default.zh-cn.lmo
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-default-settings $(1)/etc/uci-defaults/
 
 endef
 
