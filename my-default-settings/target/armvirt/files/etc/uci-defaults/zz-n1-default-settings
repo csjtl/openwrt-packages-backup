@@ -1,31 +1,9 @@
 #!/bin/sh
 
 version=`uci -q get base_config.@status[0].version`
+hostname=`uci -q get system.@system[0].hostname`
+test -n "${hostname}" || hostname="OpenWrt"
 
-uci set luci.main.lang=auto
-uci commit luci
-
-[ -f '/bin/bash' ] && sed -i 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/bin/bash|g' /etc/passwd
-
-test $version -lt 1 && {
-	uci -q set luci.main.lang='auto'
-	uci -q set luci.main.mediaurlbase=/luci-static/openwrt-2020
-	uci commit luci
-	
-	uci -q set dropbear.@dropbear[0].Interface='lan'
-	uci commit dropbear
-	
-	uci -q get system.@system[0] >/dev/null 2>&1 && {
-		uci -q set system.@system[0].zonename='Asia/Shanghai'
-		uci -q set system.@system[0].timezone='CST-8'
-		uci -q del system.ntp.server
-		uci -q add_list system.ntp.server='ntp.aliyun.com'
-		uci -q add_list system.ntp.server='0.openwrt.pool.ntp.org'
-		uci commit system
-	}
-	
-	(echo "root"; sleep 1; echo "root") | /bin/busybox passwd root >/dev/null 2>&1 &
-	
 	wifi_setup_radio(){
 	local radio=$1
 	htmode="$(uci get wireless.${radio}.htmode)"
@@ -56,21 +34,25 @@ test $version -lt 1 && {
 			fi
 		}
 	}
+  
+test $version -lt 3 && {
+uci set firewall.@defaults[0].flow_offloading='1'
+uci commit firewall
 
 	[ -f /etc/config/wireless ] && {
 		SSID=${hostname}
 		SSID_PASSWD=""
+		( while ! cat /etc/config/wireless | grep "radio0"; do
+		sleep 1
+		done
 		for radio in radio0 radio1 radio2 radio3; do
 			wifi_setup_radio ${radio}
 		done
 		uci commit wireless
+		wifi reload
+		) &
 	}
- 
-	uci -q set network.lan.ipaddr="10.0.0.1"
-	uci -q set network.@globals[0].packet_steering=1
-	uci commit network
 }
 
-
-
-
+uci -q set base_config.@status[0].version=3
+uci commit base_config
