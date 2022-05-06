@@ -39,8 +39,8 @@ define Package/autocore/install/Default
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/generic/090-cover-index_files $(1)/etc/uci-defaults/
 	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/generic/cpuinfo $(1)/sbin/cpuinfo
-	$(INSTALL_BIN) ./files/generic/ethinfo $(1)/sbin/ethinfo
+	$(INSTALL_BIN) ./files/generic/cpuinfo $(1)/sbin/
+	$(INSTALL_BIN) ./files/generic/ethinfo $(1)/sbin/
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(CP) ./files/generic/luci-mod-status-autocore.json $(1)/usr/share/rpcd/acl.d/
 
@@ -52,7 +52,7 @@ define Package/autocore-arm/install
 	$(call Package/autocore/install/Default,$(1))
 
 ifneq ($(filter ipq% %mt7622, $(TARGETID)),)
-	$(INSTALL_BIN) ./files/arm/tempinfo $(1)/sbin/tempinfo
+	$(INSTALL_BIN) ./files/arm/tempinfo $(1)/sbin/
 endif
 
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
