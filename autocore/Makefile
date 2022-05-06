@@ -2,10 +2,13 @@
 #
 # Copyright (C) 2020 Lean <coolsnowwolf@gmail.com>
 # Copyright (C) 2021 ImmortalWrt.org
+
 include $(TOPDIR)/rules.mk
+
 PKG_NAME:=autocore
 PKG_FLAGS:=nonshared
 PKG_RELEASE:=$(COMMITCOUNT)
+
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_TARGET_bcm27xx \
 	CONFIG_TARGET_bcm53xx
@@ -36,11 +39,14 @@ define Package/autocore/install/Default
 	$(INSTALL_DIR) $(1)/etc
 	$(CP) ./files/generic/10_system.js $(1)/etc/rpcd_10_system.js
 	$(CP) ./files/generic/luci $(1)/etc/rpcd_luci
+
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/generic/090-cover-index_files $(1)/etc/uci-defaults/
+
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) ./files/generic/cpuinfo $(1)/sbin/
 	$(INSTALL_BIN) ./files/generic/ethinfo $(1)/sbin/
+
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(CP) ./files/generic/luci-mod-status-autocore.json $(1)/usr/share/rpcd/acl.d/
 
@@ -54,9 +60,6 @@ define Package/autocore-arm/install
 ifneq ($(filter ipq% %mt7622, $(TARGETID)),)
 	$(INSTALL_BIN) ./files/arm/tempinfo $(1)/sbin/
 endif
-
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
-	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
 define Package/autocore-x86/install
@@ -64,12 +67,6 @@ define Package/autocore-x86/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/x86/autocore $(1)/etc/init.d/
-
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index/
-	$(INSTALL_DATA) ./files/x86/nvme_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
-	
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/view/admin_status/index
-	$(INSTALL_DATA) ./files/generic/disc_status.htm $(1)/usr/lib/lua/luci/view/admin_status/index/
 endef
 
 $(eval $(call BuildPackage,autocore-arm))
