@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=default-settings
 PKG_VERSION:=0.1
-PKG_RELEASE:=$(COMMITCOUNT)
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0
 
@@ -13,5 +13,5 @@ define Package/default-settings
   CATEGORY:=LuCI
   TITLE:=LuCI support for Default Settings
   PKGARCH:=all
-  DEPENDS:=+luci-lib-base
+  DEPENDS:=+luci-base +bash
 endef
